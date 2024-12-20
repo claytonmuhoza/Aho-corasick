@@ -12,8 +12,6 @@ struct _FileNode{
     ElementFile *head;
     ElementFile *tail;
 };
-void enfiler(FileNode *file, int node);
-int defiler(FileNode *file);
 // Fonction pour enfiler un élément dans la file
 void enfiler(FileNode *file, int node);
 // Foncton pour defiler un element de la file

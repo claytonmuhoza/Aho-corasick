@@ -10,20 +10,30 @@ struct _trie {
     char *finite;      /* Tableau indiquant les états terminaux (où un mot peut se terminer) */
 
 };
-typedef struct _ElementFile ElementFile;\
+
+
+
+// Structure pour les éléments de la file
+typedef struct _ElementFile ElementFile;
 struct _ElementFile{
     int node;
     ElementFile *next;
 };
-// Structure pour les éléments de la file
+// Structure de la file
 typedef struct _FileNode FileNode;
 struct _FileNode{
     ElementFile *head;
     ElementFile *tail;
 };
+// Fonction pour enfiler un élément dans la file
 void enfiler(FileNode *file, int node);
+// Foncton pour defiler un element de la file
 int defiler(FileNode *file);
+FileNode* creerFile();
+
+
 // Définition du type Trie comme un pointeur vers la structure _trie
+
 typedef struct _trie *Trie;
 //construction des liens de suppleance
 void calculSuppleant(Trie trie);

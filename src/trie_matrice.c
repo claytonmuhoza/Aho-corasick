@@ -177,13 +177,19 @@ void insertFactors(Trie trie, unsigned char *word)
         }
     }
 }
-
+FileNode* creerFile()
+{
+    FileNode* file = (FileNode*)malloc(sizeof(FileNode));
+    file->head = NULL;
+    file->tail = NULL;
+    return file;
+}
 void enfiler(FileNode *file, int node)
 {
+   
     ElementFile *element = (ElementFile *)malloc(sizeof(ElementFile));
     element->node = node;
     element->next = NULL;
-
     if (file->head == NULL) {
         file->head = element;
         file->tail = element;
@@ -194,7 +200,8 @@ void enfiler(FileNode *file, int node)
 }
 int defiler(FileNode *file)
 {
-    if (file->head == NULL) {
+    
+    if (file == NULL || file->head == NULL) {
         return -1;
     }
     int node = file->head->node;

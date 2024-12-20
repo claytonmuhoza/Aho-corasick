@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../header/file.h"
+
 // Inclure les bons fichiers de test en fonction de la compilation
 #ifdef USE_HASH
     #include "../header/test_hash.h"
@@ -14,10 +14,10 @@ int main()
     testHash();
 #elif defined(USE_MATRICE)
     testMatrice();
-    
-#endif
     printf("test\n");
-    FileNode *file = (FileNode *)malloc(sizeof(FileNode));
+    FileNode *file = creerFile();
+    
+    printf("enfiler\n");
     enfiler(file, 12);
     enfiler(file, 14);
     enfiler(file, 17);
@@ -30,5 +30,7 @@ int main()
     for(int i = 0; i < 8; i++){
         printf("%d\n",defiler(file));
     }
+#endif
+    
     return 0;
 }
