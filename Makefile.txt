@@ -1,0 +1,14 @@
+ insertWord(trie, "cbbabc");
+    insertWord(trie, "abb");
+    insertWord(trie, "bcbbc");
+    insertWord(trie, "cbbac");
+    insertWord(trie, "cccb");
+    insertWord(trie, "abba");
+    insertWord(trie, "bba");
+    insertWord(trie, "aacb");
+    insertWord(trie, "aba");
+    insertWord(trie, "ccabac");
+    buildSuffixLinks(trie);
+
+    const char *text = "abacbbccbbbbaaccababaababacccbbbabbbbacbaccccabaaacccbbaacbabaaaacbaaacbbbbcaababbcbcccbaccccabbcbbbbacacbccababbcbcccccaaccbaaaccaaacbacabcccabcabcaacbabbabbccbccbaabbacbaaaaaacacacbabbabbbabcbbbbabaaacbabcabacbcbaaacbabaaccbabaabccbaaabcbbcacbacbcccbcbbcababccaaabcbcbabbcaaaacabaacccccccbbcaacbbbbbbaccccabcaaccaabacacbcbcaaababccacaaabcbbccabbabcbbcccbbbabbcccabaaaaacacbacbbbccaacaacaaacccaaccaabbaaaacaccbcabaacbcaaccacaacabbcacabaaabccbabaabbbaaaaabcbccbacbcccaccbabaccaabcbcbcbabcaabbaabacbaa";
+    int result = searchOccurrences(trie, text);

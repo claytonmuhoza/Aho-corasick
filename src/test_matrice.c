@@ -1,131 +1,132 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../header/test_matrice.h"
-#include "../header/test_matrice.h"
 
-/**
- * Fonction principale de test pour la matrice du trie.
- * Elle teste l'insertion de mots, de préfixes, de suffixes et de facteurs dans le trie.
- */
-void testMatrice() {
-    // Création d'un trie avec 60 nœuds maximum
-    Trie trie = createTrie(60);
-    printf("Trie créé avec succès\n");
+#define ALPHABET_SIZE 26 // Supposons un alphabet anglais en minuscules
+#define CHAR_TO_INDEX(c) ((c) - 'a')
 
-    // Mots à insérer dans le trie
-    unsigned char word1[] = "acagt";
-    unsigned char word2[] = "acgt";
-    unsigned char word3[] = "cagt";
-    unsigned char motPrefixe[] = "bonjour";
-    unsigned char motSuffixe[] = "hello";
+// Structure représentant un triee avec une matrice de transition
+struct _triee {
+    int maxNode;       /* Nombre maximal de nœuds du triee */
+    int nextNode;      /* Indice du prochain nœud disponible */
+    int **transition;  /* Matrice de transition */
+    int *fail;         /* Tableau des suppléants */
+    char *finite;      /* États terminaux */
+};
 
-    // Insertion des mots dans le trie et affichage du résultat
-    printf("Insertion du mot %s dans le trie\n", word1);
-    insertInTrie(trie, word1);
-    afficherIsInTrie(trie, word1);
+typedef struct _triee Triee;
 
-    printf("Insertion du mot %s dans le trie\n", word2);
-    insertInTrie(trie, word2);
-    afficherIsInTrie(trie, word2);
-
-    printf("Insertion du mot %s dans le trie\n", word3);
-    insertInTrie(trie, word3);
-    afficherIsInTrie(trie, word3);
-
-    // Test sur un mot qui n'a pas encore été inséré dans le trie
-    unsigned char notInTrieWord[] = "test";
-    printf("\nTest sur un mot qui n'a pas été inséré dans le trie\n");
-    afficherIsInTrie(trie, notInTrieWord);
-
-    // Insertion des préfixes d'un mot dans le trie
-    printf("\nInsertion des préfixes du mot %s dans le trie\n", motPrefixe);
-    insertPrefixes(trie, motPrefixe);
-
-    // Test des préfixes
-    showPrefixeIsInTrie(trie, motPrefixe);
-
-    // Insertion des suffixes d'un mot dans le trie
-    printf("\nInsertion des suffixes du mot %s dans le trie\n", motSuffixe);
-    insertSufixes(trie, motSuffixe);
-
-    // Test des suffixes
-    showSuffixeIsInTrie(trie, motSuffixe);
-
-    // Insertion et test des facteurs d'un mot
-    unsigned char motFacteur[] = "abaabab";
-    insertFactors(trie, motFacteur);
-    showFacteurIsInTrie(trie, motFacteur);
-
-    // Affichage des données du trie
-    afficherTrie(trie);
-    displayFiniteState(trie);
-}
-
-/**
- * Fonction qui affiche si un mot donné est dans le trie.
- * Elle prend en paramètre le trie et le mot à vérifier.
- */
-void afficherIsInTrie(Trie trie, unsigned char* word) {
-    printf("Le mot %s est dans le trie: ", word);
-    isInTrie(trie, word) ? printf("oui\n") : printf("non\n");
-}
-
-/**
- * Fonction qui affiche si les préfixes d'un mot sont dans le trie.
- * Elle parcourt tous les préfixes possibles du mot et les vérifie dans le trie.
- */
-void showPrefixeIsInTrie(Trie trie, unsigned char *word) {
-    int sizeOfWord = strlen((const char *)word);
-    char *prefixe = (char*)malloc((sizeOfWord + 1) * sizeof(char)); // Allocation mémoire pour le préfixe
-
-    for (int i = 0; i <= sizeOfWord; i++) {
-        strncpy(prefixe, (const char *)word, i); // Copie le préfixe actuel
-        prefixe[i] = '\0'; // Ajoute la fin de chaîne
-        printf("Le préfixe %s\n est dans le trie ? ", prefixe);
-        isInTrie(trie, word) ? printf("oui\n") : printf("non\n");
+// Initialisation d'un triee
+Triee *createTriee(int maxNode) {
+    Triee *triee = (Triee *)malloc(sizeof(Triee));
+    triee->maxNode = maxNode;
+    triee->nextNode = 1; // Le nœud 0 est la racine
+    
+    // Allocation de la matrice de transition
+    triee->transition = (int **)malloc(maxNode * sizeof(int *));
+    for (int i = 0; i < maxNode; i++) {
+        triee->transition[i] = (int *)malloc(ALPHABET_SIZE * sizeof(int));
+        memset(triee->transition[i], -1, ALPHABET_SIZE * sizeof(int));
     }
 
-    free(prefixe); // Libération de la mémoire
-    printf("\n");
+    triee->fail = (int *)malloc(maxNode * sizeof(int));
+    memset(triee->fail, 0, maxNode * sizeof(int));
+
+    triee->finite = (char *)calloc(maxNode, sizeof(char));
+    return triee;
 }
 
-/**
- * Fonction qui affiche si les suffixes d'un mot sont dans le trie.
- * Elle parcourt tous les suffixes possibles du mot et les vérifie dans le trie.
- */
-void showSuffixeIsInTrie(Trie trie, unsigned char *word) {
-    int sizeOfWord = strlen((const char *)word);
-    char *suffixe = (char*)malloc((sizeOfWord + 1) * sizeof(char)); // Allocation mémoire pour le suffixe
-
-    printf("Test si les suffixes du mot %s sont dans le trie\n", word);
-    for (int i = sizeOfWord - 1; i >= 0; i--) {
-        strncpy(suffixe, (const char *)(word + i), sizeOfWord - i); // Copie le suffixe actuel
-        suffixe[sizeOfWord - i] = '\0'; // Ajoute la fin de chaîne
-        printf("Le suffixe %s est dans le trie ? ", suffixe);
-        isInTrie(trie, word) ? printf("oui\n") : printf("non\n");
+// Insertion d'un mot dans le triee
+void insert(Triee *triee, const char *word) {
+    int currentNode = 0;
+    for (int i = 0; word[i] != '\0'; i++) {
+        int index = CHAR_TO_INDEX(word[i]);
+        if (triee->transition[currentNode][index] == -1) {
+            triee->transition[currentNode][index] = triee->nextNode++;
+        }
+        currentNode = triee->transition[currentNode][index];
     }
-
-    free(suffixe); // Libération de la mémoire
-    printf("\n");
+    triee->finite[currentNode] = 1;
 }
 
-/**
- * Fonction qui affiche si les facteurs (sous-chaînes) d'un mot sont dans le trie.
- * Elle parcourt toutes les sous-chaînes du mot et les vérifie dans le trie.
- */
-void showFacteurIsInTrie(Trie trie, unsigned char *word) {
-    int len = strlen((char *)word);
-    printf("Test si les facteurs du mot %s sont dans le trie\n", word);
+// Construction des liens de suppléance
+void buildFailLinks(Triee *triee) {
+    int *queue = (int *)malloc(triee->maxNode * sizeof(int));
+    int front = 0, back = 0;
 
-    // Parcourt toutes les sous-chaînes du mot
-    for (int i = 0; i < len; i++) {
-        for (int j = i + 1; j <= len; j++) {
-            unsigned char facteur[j - i + 1];
-            strncpy((char *)facteur, (char *)(word + i), j - i); // Copie le facteur actuel
-            facteur[j - i] = '\0'; // Ajoute la fin de chaîne
-            printf("Le facteur %s \nest dans le trie ? ", facteur);
-            isInTrie(trie, word) ? printf("oui\n") : printf("non\n");
+    // Initialisation des suppléants pour les enfants directs de la racine
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        if (triee->transition[0][i] != -1) {
+            queue[back++] = triee->transition[0][i];
+            triee->fail[triee->transition[0][i]] = 0;
         }
     }
+
+    // Construction des suppléants pour les autres nœuds
+    while (front < back) {
+        int currentNode = queue[front++];
+        printf("parcours des noueds %d\n", currentNode);
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
+            int child = triee->transition[currentNode][i];
+            if (child != -1) {
+                int failNode = triee->fail[currentNode];
+                while (failNode != 0 && triee->transition[failNode][i] == -1) {
+                    failNode = triee->fail[failNode];
+                }
+                if (triee->transition[failNode][i] != -1) {
+                    failNode = triee->transition[failNode][i];
+                }
+                triee->fail[child] = failNode;
+                triee->finite[child] |= triee->finite[failNode]; // Marquer si c'est un état terminal
+                queue[back++] = child;
+            }
+        }
+    }
+    free(queue);
+}
+
+// Recherche des motifs dans un texte
+void search(Triee *triee, const char *text) {
+    int currentNode = 0;
+    for (int i = 0; text[i] != '\0'; i++) {
+        int index = CHAR_TO_INDEX(text[i]);
+        while (currentNode != 0 && triee->transition[currentNode][index] == -1) {
+            currentNode = triee->fail[currentNode];
+        }
+        if (triee->transition[currentNode][index] != -1) {
+            currentNode = triee->transition[currentNode][index];
+        }
+        if (triee->finite[currentNode]) {
+            printf("Mot trouvé à l'indice %d\n", i);
+        }
+    }
+}
+
+// Libération de la mémoire allouée pour le triee
+void freeTriee(Triee *triee) {
+    for (int i = 0; i < triee->maxNode; i++) {
+        free(triee->transition[i]);
+    }
+    free(triee->transition);
+    free(triee->fail);
+    free(triee->finite);
+    free(triee);
+}
+
+int testMatrice() {
+    // Exemple d'utilisation
+    Triee *triee = createTriee(1000); // Capacité maximale de 1000 nœuds
+    
+    insert(triee, "he");
+    insert(triee, "she");
+    insert(triee, "hers");
+    insert(triee, "his");
+
+    buildFailLinks(triee);
+
+    const char *text = "ahishers";
+    search(triee, text);
+
+    freeTriee(triee);
+    return 0;
 }

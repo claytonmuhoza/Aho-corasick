@@ -23,6 +23,7 @@ Trie createTrie(int max_node)
 
     // Allocation memoire pour la matrice de transition
     trie->transition = (int**)malloc(max_node * sizeof(int*));
+    trie->suffixLink = calloc(max_node, sizeof(int)); // Allocation pour les liens de suffixe (initialises à 0)
     trie->finite = (char*)calloc(max_node, sizeof(char)); // Allocation pour les etats terminaux (initialises à 0)
 
     if (trie->transition == NULL) {
@@ -98,6 +99,16 @@ void insertInTrie(Trie trie, unsigned char* word)
     }
     trie->finite[currentNode] = 1; // Marquer le nœud final comme terminal
 }
+// int get_link(Trie t,int v) {
+
+//     if (t[v].fail == -1) {
+//         if (v == 0 || t[v].fail == 0)
+//             t[v].fail = 0;
+//         else
+//             t[v].fail= 0;//go(get_link(t,t[v].fail), t[v].fail);
+//     }
+//     return t[v].fail;
+// }
 
 // Fonction pour verifier si un mot est present dans le trie
 int isInTrie(Trie trie, unsigned char *word)
@@ -184,6 +195,7 @@ FileNode* creerFile()
     file->tail = NULL;
     return file;
 }
+//fonction pour enfiler un element dans la file
 void enfiler(FileNode *file, int node)
 {
    
@@ -198,6 +210,7 @@ void enfiler(FileNode *file, int node)
         file->tail = element;
     }
 }
+//fonction pour defiler un element de la file
 int defiler(FileNode *file)
 {
     
@@ -212,4 +225,97 @@ int defiler(FileNode *file)
     }
     free(element);
     return node;
+}
+
+
+// Fonction pour trouver le mot correspondant jusqu'à un nœud donné
+char *findWord(Trie trie, int node) {
+    if (node >= trie->nextNode) {
+        fprintf(stderr, "Erreur : Nœud invalide %d.\n", node);
+        return NULL;
+    }
+
+    char *word = malloc(trie->maxNode * sizeof(char));
+    if (word == NULL) {
+        fprintf(stderr, "Erreur d'allocation mémoire pour le mot.\n");
+        return NULL;
+    }
+    int index = 0;
+    while (node != 0) { // Remonter jusqu'à la racine
+        int parent = -1;
+        char c = '\0';
+        for (int i = 0; i < trie->maxNode; i++) {
+            for (int ch = 0; ch < UCHAR_MAX; ch++) {
+                if (trie->transition[i][ch] == node) {
+                    parent = i;
+                    c = (char)ch;
+                    break;
+                }
+            }
+            if (parent != -1) break;
+        }
+        if (parent == -1) {
+            fprintf(stderr, "Erreur : Nœud parent non trouvé pour %d.\n", node);
+            free(word);
+            return NULL;
+        }
+        word[index++] = c; // Ajouter le caractère
+        node = parent;     // Monter au parent
+    }
+    word[index] = '\0';
+    // Inverser le mot
+    for (int i = 0; i < index / 2; i++) {
+        char temp = word[i];
+        word[i] = word[index - i - 1];
+        word[index - i - 1] = temp;
+    }
+    return word;
+}
+
+// Fonction pour calculer et retourner le suppléant d'un nœud donné
+int findSuffixLink(Trie trie, int node) {
+    if (node == 0) return 0; // Le suppléant de la racine est elle-même
+
+    // Si le suppléant est déjà calculé, le retourner
+    if (trie->suffixLink[node] != 0) {
+        return trie->suffixLink[node];
+    }
+
+    // Récupérer le suppléant du parent
+    int parent = 0;
+    char charToParent = '\0';
+
+    // Trouver le parent du nœud courant et l’arête (caractère) qui mène à ce nœud
+    for (int i = 0; i < trie->maxNode; i++) {
+        for (int ch = 0; ch < UCHAR_MAX; ch++) {
+            if (trie->transition[i][ch] == node) {
+                parent = i;
+                charToParent = (char)ch;
+                break;
+            }
+        }
+        if (parent != 0) break;
+    }
+
+    if (parent == 0) {
+        fprintf(stderr, "Erreur : Impossible de trouver le parent du nœud %d.\n", node);
+        return 0; // Défaut : retourner 0 si le parent n'est pas trouvé
+    }
+
+    // Récursivement calculer le suppléant du parent
+    int parentSuffixLink = findSuffixLink(trie, parent);
+
+    // Chercher le nœud correspondant au caractère via le suppléant du parent
+    while (parentSuffixLink != 0 && trie->transition[parentSuffixLink][(unsigned char)charToParent] == -1) {
+        parentSuffixLink = trie->suffixLink[parentSuffixLink];
+    }
+
+    // Déterminer le suppléant final
+    if (trie->transition[parentSuffixLink][(unsigned char)charToParent] != -1) {
+        trie->suffixLink[node] = trie->transition[parentSuffixLink][(unsigned char)charToParent];
+    } else {
+        trie->suffixLink[node] = 0;
+    }
+
+    return trie->suffixLink[node];
 }

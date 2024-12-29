@@ -6,9 +6,9 @@ struct _trie {
     int maxNode;       /* Nombre maximal de nœuds du trie */
     int nextNode;      /* Indice du prochain nœud disponible */
     int **transition;  /* Matrice de transition où chaque nœud peut avoir plusieurs transitions vers d'autres nœuds */
-    int fail;         /* Indice du suppleant */
+    int fail; 
+    int *suffixLink;   /* Tableau des suppléants */       
     char *finite;      /* Tableau indiquant les états terminaux (où un mot peut se terminer) */
-
 };
 
 
@@ -29,6 +29,7 @@ struct _FileNode{
 void enfiler(FileNode *file, int node);
 // Foncton pour defiler un element de la file
 int defiler(FileNode *file);
+
 FileNode* creerFile();
 
 
@@ -62,4 +63,6 @@ void insertSufixes(Trie trie, unsigned char *word);
 void insertFactors(Trie trie, unsigned char *word);
 // calculer le fail
 void calculFail(Trie trie);
+// Fonction pour calculer et retourner le suppléant d'un nœud donné
+int findSuffixLink(Trie trie, int node);
 #endif // TRIE_H

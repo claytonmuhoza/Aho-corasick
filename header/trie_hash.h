@@ -7,6 +7,7 @@ struct _list {
     int startNode, targetNode;
     unsigned char letter;
     struct _list *next;
+    char *suffix; //suppleant
 };
 
 typedef struct _trie *Trie;
@@ -17,6 +18,7 @@ struct _trie {
     List *transition;
     char *finite;
 };
+
 
 // Fonction pour créer un trie avec un nombre maximum de nœuds
 Trie createTrie(int maxNode);
