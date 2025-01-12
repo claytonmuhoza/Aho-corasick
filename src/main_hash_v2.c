@@ -27,18 +27,6 @@ Trie createTrie(int maxNode);
 // Fonction pour insérer un mot dans le trie
 void insertInTrie(Trie trie, const char *w);
 
-// Fonction pour vérifier si un mot est présent dans le trie
-int isInTrie(Trie trie, unsigned char *w);
-
-// Fonction pour insérer les préfixes d'un mot dans le trie
-void insertPrefixes(Trie trie, unsigned char *word);
-
-// Fonction pour insérer les suffixes d'un mot dans le trie
-void insertSufixes(Trie trie, unsigned char *word);
-
-// Fonction pour insérer tous les facteurs (sous-chaînes) d'un mot dans le trie
-void insertFactors(Trie trie, unsigned char *w);
-
 // Fonction pour calculer la taille du tableau de hachage nécessaire en fonction du nombre de nœuds maximum
 int hashSize(int maxNode);
 /**
@@ -183,9 +171,7 @@ void insertInTrie(Trie trie, const char *mot) {
 }
 
 void buildSuffixLinks(Trie trie) {
-    // int *queue = (int *)malloc(trie->maxNode * sizeof(int));
     FileNode *file = createFile(trie->maxNode);
-    // int front = 0, rear = 0;
 
     // Initialisation des liens suffixes
     for (int i = 0; i < 256; i++) {
@@ -198,9 +184,7 @@ void buildSuffixLinks(Trie trie) {
             entry = entry->next;
         }
     }
-    //while front < rear
     while (!estVide(file)) {
-        // int currentNode = queue[front++];
         int currentNode = defiler(file);
         for (int i = 0; i < 256; i++) {
             unsigned int h = hashFunction(currentNode, i, trie->maxNode);
@@ -289,23 +273,7 @@ void lireEtInserer(Trie trie,const char *filename){
         perror("Erreur lors de la lecture du fichier");
     }
 }
-//Charger les mots dans le trie
-void loadWords(Trie trie, const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        perror("Erreur d'ouverture du fichier de mots");
-        exit(EXIT_FAILURE);
-    }
 
-    char buffer[256];
-    while (fgets(buffer, sizeof(buffer), file)) {
-        buffer[strcspn(buffer, "\n")] = '\0'; // Supprimer le saut de ligne
-
-        printf("MaxNode: %d\n", trie->maxNode);
-        insertInTrie(trie, buffer);
-    }
-    fclose(file);
-}
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         fprintf(stderr, "Usage: %s <fichier_mots.txt> <fichier_text.txt>\n", argv[0]);

@@ -1,7 +1,6 @@
 make
-mkdir -p generated
-./genere-texte 50000 100 > generated/texte3.txt
-./genere-mots 5 7 8 100 > generated/mots3.txt
-./ac-matrice generated/mots3.txt generated/texte3.txt > generated/res-ac-matrice
-./ac-hachage generated/mots3.txt generated/texte3.txt > generated/res-ac-hachage
-diff generated/res-ac-matrice generated/res-ac-hachage
+./genere-texte 50000 3 > texte3.txt
+./genere-mots 10 5 25 3 > mots3.txt
+./ac-matrice mots3.txt texte3.txt > res-ac-matrice
+./ac-hachage mots3.txt texte3.txt > res-ac-hachage
+diff res-ac-matrice res-ac-hachage
