@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
     fclose(textFp);
 
     
-    printf("%d\n",searchOccurrences(trie, text));
+    printf("%d",searchOccurrences(trie, text));
 
     free(text);
 

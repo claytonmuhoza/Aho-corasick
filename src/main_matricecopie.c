@@ -4,42 +4,71 @@
 
 #define ALPHABET_SIZE 256  // Taille maximale pour un alphabet dynamique
 
-// Structure représentant une file
-typedef struct {
-    int *data;
-    int front;
-    int rear;
-    int capacity;
-} File;
+// Structure pour les éléments de la file
+typedef struct _ElementFile {
+    int node;
+    struct _ElementFile *next;
+} ElementFile;
+
+// Structure de la file
+typedef struct _FileNode {
+    ElementFile *head;
+    ElementFile *tail;
+} FileNode;
 
 // Initialiser une file
-File *createFile(int capacity) {
-    File *file = (File *)malloc(sizeof(File));
-    file->data = (int *)malloc(capacity * sizeof(int));
-    file->front = 0;
-    file->rear = 0;
-    file->capacity = capacity;
+FileNode *createFile() {
+    FileNode *file = (FileNode *)malloc(sizeof(FileNode));
+    file->head = file->tail = NULL;
     return file;
 }
 
 // Enfiler un élément dans la file
-void enfiler(File *file, int value) {
-    file->data[file->rear++] = value;
+void enfiler(FileNode *file, int value) {
+    ElementFile *newElement = (ElementFile *)malloc(sizeof(ElementFile));
+    newElement->node = value;
+    newElement->next = NULL;
+
+    if (file->tail) {
+        file->tail->next = newElement;
+    } else {
+        file->head = newElement;
+    }
+    file->tail = newElement;
 }
 
 // Défiler un élément de la file
-int defiler(File *file) {
-    return file->data[file->front++];
+int defiler(FileNode *file) {
+    if (!file->head) {
+        fprintf(stderr, "Erreur : Tentative de défilage dans une file vide.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    ElementFile *temp = file->head;
+    int value = temp->node;
+    file->head = file->head->next;
+
+    if (!file->head) {
+        file->tail = NULL;
+    }
+
+    free(temp);
+    return value;
 }
 
 // Vérifier si la file est vide
-int estVide(File *file) {
-    return file->front == file->rear;
+int estVide(FileNode *file) {
+    return file->head == NULL;
 }
 
 // Libérer la mémoire de la file
-void freeFile(File *file) {
-    free(file->data);
+void freeFile(FileNode *file) {
+    ElementFile *current = file->head;
+    while (current) {
+        ElementFile *next = current->next;
+        free(current);
+        current = next;
+    }
     free(file);
 }
 
@@ -74,43 +103,54 @@ void insertWord(Trie trie, const char *word) {
     int node = 0;
     for (int i = 0; word[i]; i++) {
         unsigned char c = (unsigned char)word[i];
+        //si la transition n'existe pas, on la crée
         if (trie->transition[node][c] == -1) {
-            trie->transition[node][c] = trie->nextNode++;
+            trie->transition[node][c] = trie->nextNode;// Associer une transition vers un nouveau nœud
+            trie->nextNode++; // Incrementer l'indice du prochain nœud disponible
         }
+        //on passe au noeud suivant en suivant la transition
         node = trie->transition[node][c];
     }
-    trie->finite[node] = 1;
+
+    trie->finite[node] = 1; // Marquer le nœud final comme terminal
 }
 
 // Construire les liens de suffixe
 void buildSuffixLinks(Trie trie) {
-    File *file = createFile(trie->maxNode);
+    // Créer une file pour le traitement en largeur
+    FileNode *file = createFile();
 
+    // Initialiser les liens de suffixe pour les transitions directes depuis la racine
     for (int c = 0; c < ALPHABET_SIZE; c++) {
         if (trie->transition[0][c] != -1) {
-            trie->suffix[trie->transition[0][c]] = 0;
-            enfiler(file, trie->transition[0][c]);
+            trie->suffix[trie->transition[0][c]] = 0; // Les suffixes des enfants directs de la racine pointent vers la racine
+            enfiler(file, trie->transition[0][c]); // Enfiler ces nœuds pour traitement ultérieur
         } else {
-            trie->transition[0][c] = 0;
+            trie->transition[0][c] = 0; // Les transitions manquantes pointent vers la racine
         }
     }
 
+    // Traiter les nœuds en largeur
     while (!estVide(file)) {
-        int node = defiler(file);
+        int node = defiler(file); // Défiler un nœud
 
+        // Traiter toutes les transitions de ce nœud
         for (int c = 0; c < ALPHABET_SIZE; c++) {
             if (trie->transition[node][c] != -1) {
-                int child = trie->transition[node][c];
-                int suffix = trie->suffix[node];
+                int child = trie->transition[node][c]; // Obtenir le nœud enfant
+                int suffix = trie->suffix[node]; // Obtenir le suffixe du nœud actuel
+
+                // Trouver le suffixe approprié pour l'enfant
                 while (trie->transition[suffix][c] == -1) {
                     suffix = trie->suffix[suffix];
                 }
-                trie->suffix[child] = trie->transition[suffix][c];
-                enfiler(file, child);
+                trie->suffix[child] = trie->transition[suffix][c]; // Définir le suffixe de l'enfant
+                enfiler(file, child); // Enfiler l'enfant pour traitement ultérieur
             }
         }
     }
 
+    // Libérer la mémoire de la file
     freeFile(file);
 }
 
@@ -203,17 +243,16 @@ int main(int argc, char *argv[]) {
         freeTrie(trie);
         exit(EXIT_FAILURE);
     }
-
+  
     char *text = NULL;
     size_t textLen = 0;
     getline(&text, &textLen, textFp);
     fclose(textFp);
-    
-    int occurrences = searchOccurrences(trie, text);
-    printf("%d\n", occurrences);
+
+    printf("%d\n",searchOccurrences(trie, text));
 
     free(text);
-    freeTrie(trie);
+    //freeTrie(trie);
 
     return EXIT_SUCCESS;
 }

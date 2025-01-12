@@ -79,6 +79,7 @@ typedef struct _trie {
     int **transition;
     int *suffix;
     int *finite;
+    int *occurrences;
 } *Trie;
 
 // Création d'un trie
@@ -95,6 +96,7 @@ Trie createTrie(int maxNode) {
     }
     trie->suffix = (int *)calloc(maxNode, sizeof(int));
     trie->finite = (int *)calloc(maxNode, sizeof(int));
+    trie->occurrences = (int *)calloc(maxNode, sizeof(int)); // Initialisation des occurrences à zéro
     return trie;
 }
 
@@ -103,43 +105,57 @@ void insertWord(Trie trie, const char *word) {
     int node = 0;
     for (int i = 0; word[i]; i++) {
         unsigned char c = (unsigned char)word[i];
+        //si la transition n'existe pas, on la crée
         if (trie->transition[node][c] == -1) {
-            trie->transition[node][c] = trie->nextNode++;
+            trie->transition[node][c] = trie->nextNode;// Associer une transition vers un nouveau nœud
+            trie->nextNode++; // Incrementer l'indice du prochain nœud disponible
         }
+        //on passe au noeud suivant en suivant la transition
         node = trie->transition[node][c];
     }
-    trie->finite[node] = 1;
+
+    trie->finite[node] = 1; // Marquer le nœud final comme terminal
+    trie->occurrences[node]++; // Incrémenter le compteur pour ce mot
 }
 
 // Construire les liens de suffixe
 void buildSuffixLinks(Trie trie) {
+    // Créer une file pour le traitement en largeur
     FileNode *file = createFile();
 
+    // Initialiser les liens de suffixe pour les transitions directes depuis la racine
     for (int c = 0; c < ALPHABET_SIZE; c++) {
         if (trie->transition[0][c] != -1) {
-            trie->suffix[trie->transition[0][c]] = 0;
-            enfiler(file, trie->transition[0][c]);
+            trie->suffix[trie->transition[0][c]] = 0; // Les suffixes des enfants directs de la racine pointent vers la racine
+            enfiler(file, trie->transition[0][c]); // Enfiler ces nœuds pour traitement ultérieur
         } else {
-            trie->transition[0][c] = 0;
+            trie->transition[0][c] = 0; // Les transitions manquantes pointent vers la racine
         }
     }
 
+    // Traiter les nœuds en largeur
     while (!estVide(file)) {
-        int node = defiler(file);
+        int node = defiler(file); // Défiler un nœud
 
+        // Traiter toutes les transitions de ce nœud
         for (int c = 0; c < ALPHABET_SIZE; c++) {
             if (trie->transition[node][c] != -1) {
-                int child = trie->transition[node][c];
-                int suffix = trie->suffix[node];
+                int child = trie->transition[node][c]; // Obtenir le nœud enfant
+                int suffix = trie->suffix[node]; // Obtenir le suffixe du nœud actuel
+
+                // Trouver le suffixe approprié pour l'enfant
                 while (trie->transition[suffix][c] == -1) {
                     suffix = trie->suffix[suffix];
                 }
-                trie->suffix[child] = trie->transition[suffix][c];
-                enfiler(file, child);
+                trie->suffix[child] = trie->transition[suffix][c]; // Définir le suffixe de l'enfant
+                // Ajouter les occurrences du suffixe au nœud enfant
+                trie->occurrences[child] += trie->occurrences[trie->suffix[child]];
+                enfiler(file, child); // Enfiler l'enfant pour traitement ultérieur
             }
         }
     }
 
+    // Libérer la mémoire de la file
     freeFile(file);
 }
 
@@ -154,14 +170,9 @@ int searchOccurrences(Trie trie, const char *text) {
             node = trie->suffix[node];
         }
         node = trie->transition[node][c];
-
-        int temp = node;
-        while (temp != 0) {
-            if (trie->finite[temp]) {
-                count++;
-            }
-            temp = trie->suffix[temp];
-        }
+        
+        // Ajouter les occurrences de l'état courant au compteur total
+        count += trie->occurrences[node];
     }
 
     return count;
@@ -232,21 +243,16 @@ int main(int argc, char *argv[]) {
         freeTrie(trie);
         exit(EXIT_FAILURE);
     }
-    //afficher les suppleant pour chaque noeud
-    for (int i = 0; i < trie->maxNode; i++) {
-        printf("suppleant[%d] = %d\n", i, trie->suffix[i]);
-    }
-
+  
     char *text = NULL;
     size_t textLen = 0;
     getline(&text, &textLen, textFp);
     fclose(textFp);
 
-    int occurrences = searchOccurrences(trie, text);
-    printf("Nombre total de motifs trouvés : %d\n", occurrences);
+    printf("%d",searchOccurrences(trie, text));
 
     free(text);
-    freeTrie(trie);
+    //freeTrie(trie);
 
     return EXIT_SUCCESS;
 }
