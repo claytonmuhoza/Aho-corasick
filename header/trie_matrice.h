@@ -1,68 +1,58 @@
-#ifndef TRIE_H
-#define TRIE_H
-
-// Structure représentant un trie avec une matrice de transition
-struct _trie {
-    int maxNode;       /* Nombre maximal de nœuds du trie */
-    int nextNode;      /* Indice du prochain nœud disponible */
-    int **transition;  /* Matrice de transition où chaque nœud peut avoir plusieurs transitions vers d'autres nœuds */
-    int fail; 
-    int *suffixLink;   /* Tableau des suppléants */       
-    char *finite;      /* Tableau indiquant les états terminaux (où un mot peut se terminer) */
-};
-
-
+#ifndef TRIE_MATRICE_H
+#define TRIE_MATRICE_H
 
 // Structure pour les éléments de la file
-typedef struct _ElementFile ElementFile;
-struct _ElementFile{
+typedef struct _ElementFile {
     int node;
-    ElementFile *next;
-};
+    struct _ElementFile *next;
+} ElementFile;
+
 // Structure de la file
-typedef struct _FileNode FileNode;
-struct _FileNode{
+typedef struct _FileNode {
     ElementFile *head;
     ElementFile *tail;
-};
-// Fonction pour enfiler un élément dans la file
-void enfiler(FileNode *file, int node);
-// Foncton pour defiler un element de la file
+} FileNode;
+
+// Initialiser une file
+FileNode *createFile();
+
+// Enfiler un élément dans la file
+void enfiler(FileNode *file, int value);
+
+// Défiler un élément de la file
 int defiler(FileNode *file);
 
-FileNode* creerFile();
+// Vérifier si la file est vide
+int estVide(FileNode *file);
 
+// Libérer la mémoire de la file
+void freeFile(FileNode *file);
 
-// Définition du type Trie comme un pointeur vers la structure _trie
+// Structure représentant un trie
+typedef struct _trie {
+    int maxNode;
+    int nextNode;
+    int **transition;
+    int *suffix;
+    int *finite;
+    int *occurrences;
+} *Trie;
 
-typedef struct _trie *Trie;
-//construction des liens de suppleance
-void calculSuppleant(Trie trie);
-// Fonction pour créer un trie avec un nombre maximal de nœuds donné
-Trie createTrie(int max_node);
+// Création d'un trie
+Trie createTrie(int maxNode);
+// Insérer un mot dans le trie
+void insertWord(Trie trie, const char *word);
+// Construire les liens de suffixe
+void buildSuffixLinks(Trie trie);
 
-// Fonction pour insérer un mot dans un trie
-void insertInTrie(Trie trie, unsigned char* word);
+// Rechercher les occurrences des motifs dans un texte
+int searchOccurrences(Trie trie, const char *text);
 
-// Fonction pour afficher la structure du trie (transitions et états)
-void afficherTrie(Trie trie);
+// Libérer la mémoire allouée au trie
+void freeTrie(Trie trie);
+// Calculer la taille maximale du trie
+int calculateTrieSize(const char *filename);
 
-// Fonction pour afficher les états terminaux d'un trie
-void displayFiniteState(Trie trie);
-
-// Fonction pour vérifier si un mot est contenu dans un trie
-int isInTrie(Trie trie, unsigned char *word);
-
-// Fonction pour insérer les préfixes d'un mot dans un trie
-void insertPrefixes(Trie trie, unsigned char *word);
-
-// Fonction pour insérer les suffixes d'un mot dans un trie
-void insertSufixes(Trie trie, unsigned char *word);
-
-// Fonction pour insérer tous les facteurs d'un mot dans un trie
-void insertFactors(Trie trie, unsigned char *word);
-// calculer le fail
-void calculFail(Trie trie);
-// Fonction pour calculer et retourner le suppléant d'un nœud donné
-int findSuffixLink(Trie trie, int node);
-#endif // TRIE_H
+// Charger les mots dans le trie
+void loadWords(Trie trie, const char *filename);
+#endif

@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "file.h": "c",
-        "test_matrice.h": "c"
+        "test_matrice.h": "c",
+        "trie_matrice.h": "c"
     }
 }

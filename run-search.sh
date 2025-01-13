@@ -9,8 +9,8 @@ echo "Text,Words,Algorithm,Time" > results/times.csv
 echo "Words,taille_alphabet,taille_min_mots,taille_max_mots,Algorithm,Time" > results/time.csv
 
 # Effectuer les recherches
-for alphabet_size in 2 4 10 20 30 40 50 60 70; do
-    for word_range in "5 15" "15 30" "35 40" "30 60" "80 90"; do
+for alphabet_size in in 2 4 20 70; do
+    for word_range in "5 15" "15 30" "30 60"; do
         min_len=$(echo $word_range | cut -d' ' -f1)
         max_len=$(echo $word_range | cut -d' ' -f2)
         mots_file="generate/mots_${alphabet_size}_${min_len}_${max_len}.txt"
