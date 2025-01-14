@@ -105,17 +105,8 @@ void insertWord(Trie trie, const char *word) {
 void buildSuffixLinks(Trie trie) {
     // Créer une file pour le traitement en largeur
     FileNode *file = createFile();
-
-    // Initialiser les liens de suffixe pour les transitions directes depuis la racine
-    for (int c = 0; c < ALPHABET_SIZE; c++) {
-        if (trie->transition[0][c] != -1) {
-            trie->suffix[trie->transition[0][c]] = 0; // Les suffixes des enfants directs de la racine pointent vers la racine
-            enfiler(file, trie->transition[0][c]); // Enfiler ces nœuds pour traitement ultérieur
-        } else {
-            trie->transition[0][c] = 0; // Les transitions manquantes pointent vers la racine
-        }
-    }
-
+    trie->suffix[0] = 0; // Le suffixe de la racine est la racine elle-même
+    // 
     // Traiter les nœuds en largeur
     while (!estVide(file)) {
         int node = defiler(file); // Défiler un nœud
